@@ -1,0 +1,94 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.filter-form-container {
+    height: 50px;
+    width: 80%;
+    display: flex;
+    margin: 10px 10% 0 10%;
+}
+
+.filter-text-form {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.filter-text-input {
+    height: 100%;
+    width: 100%;
+    border-radius: 5px 0 0 5px;
+    padding: 20px;
+    border: 1px solid transparent;
+}
+
+.filter-text-input:focus {
+    border: 1px solid black;
+}
+
+.filter-text-submit-button {
+    height: 100%;
+    width: 200px;
+    background-color: #3d8af7;
+    color: white;
+    border-radius: 0 5px 5px 0;
+}
+
+.filter-text-submit-button:hover {
+    background-color: #4f9df5;
+    color: black;
+}
+
+.pagination-container {
+    height: 40px;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: 30px;
+    display: flex;
+}
+
+.pagination-buttons-container {
+    position: relative;
+    left: 50%;
+    transform: translate(-50%);
+    display: flex;
+}
+
+.size-select-container {
+    height: 100%;
+    width: 50px;
+    display: flex;
+    margin-left: auto;
+    margin-right: 10%;
+}
+
+#size-select {
+    width: 100%;
+    height: 100%;
+}
+
+.page-button, .current-page-button {
+    height: 100%;
+    width: 40px;
+    display: flex;
+    background-color: white;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #bebebf;
+}
+
+.current-page-button {
+    font-weight: bold;
+}
+
+.page-button:hover, .current-page-button:hover {
+    border: 2px solid black;
+}

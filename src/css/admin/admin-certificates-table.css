@@ -1,0 +1,49 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+}
+
+.items-table-container {
+    width: 80%;
+    margin: 50px 10% 30px 10%;
+    background-color: white;
+    overflow-y: auto;
+}
+
+.TableCell {
+    height: 10px;
+}
+
+.items-table-body > .MuiTableRow-root:hover {
+    background-color: #f0f0f1;
+    cursor: pointer;
+}
+
+.items-table-buttons-contaier {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.edit-button, .delete-button {
+    width: 70px;
+    color: white;
+    border-radius: 5px;
+    border: none;
+}
+
+.edit-button {
+    background-color: #eeac4e;
+}
+
+.delete-button {
+    background-color: #d7524f;
+}
+
+.edit-button:hover, .delete-button:hover {
+    color: black;
+}
