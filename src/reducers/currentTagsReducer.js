@@ -15,7 +15,7 @@ const currentTagsReducer = (state = [], action) => {
     }
 }
 
-function convertTagsForReactSelect(array) {
+export function convertTagsForReactSelect(array) {
     let converted = [];
     for (let i = 0; i < array.length; i++) {
         converted.push(

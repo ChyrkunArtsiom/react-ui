@@ -1,0 +1,29 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+}
+
+.admin-users-table-container {
+    width: 80%;
+    margin: 50px 0 30px 0;
+    background-color: white;
+    overflow-y: auto;
+}
+
+/*.admin-users-table-tablerow > .MuiTableCell-root {
+    padding: 4px 16px 4px 16px;
+}*/
+
+.admin-users-table-header > .MuiTableRow-head > .MuiTableCell-head {
+    font-weight: bold;
+}
+
+.items-table-body > .MuiTableRow-root:hover {
+    background-color: #f0f0f1;
+    cursor: pointer;
+}

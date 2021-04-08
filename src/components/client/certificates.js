@@ -7,7 +7,6 @@ import {bindActionCreators} from "redux";
 import {clearCurrentItemsAction, currentItemsAction} from "../../actions/currentItemsAction";
 import {itemsAreLoaded, itemsAreLoading} from "../../actions/itemsLoadingStatusAction";
 import CertificateItem from "./certificateItem";
-import {getTokenFromLocalStorage} from "../localStorageMethods";
 
 class Certificates extends React.Component {
     constructor(props) {
@@ -158,18 +157,12 @@ class Certificates extends React.Component {
 
     loadOnePage(currentPage, lastPage) {
         let certificatesUri = buildCertificatesURL(this, currentPage);
-        let authorization_header;
-        let token = getTokenFromLocalStorage();
-        if (token !== null) {
-            authorization_header = "Bearer ".concat(token);
-        }
 
         fetch(certificatesUri, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept-Language': 'en_US',
-                'Authorization': authorization_header
             }
         }).then(response => {
             if (response.ok) {
@@ -187,9 +180,11 @@ class Certificates extends React.Component {
             } else {
                 this.props.itemsAreLoaded();
                 scrollToPosition(this);
-                const URLParams = new URLSearchParams(this.props.location.search);
-                URLParams.set("page", (currentPage - 1).toString());
-                this.props.history.push('?' + URLParams.toString());
+                if (currentPage > 1) {
+                    const URLParams = new URLSearchParams(this.props.location.search);
+                    URLParams.set("page", (currentPage - 1).toString());
+                    this.props.history.push('?' + URLParams.toString());
+                }
             }
         });
     }

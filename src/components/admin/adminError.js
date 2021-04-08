@@ -11,6 +11,10 @@ class AdminError extends Component {
             </div>
         );
     }
+
+    componentDidMount() {
+        document.title = "Error";
+    }
 }
 
 export default AdminError;

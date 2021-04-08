@@ -28,7 +28,7 @@ body {
     overflow-x: hidden;
 }
 
-.orders-table-head > .MuiTableRow-head > .MuiTableCell-head {
+.items-table-body.MuiTableRow-head > .MuiTableCell-head {
     font-weight: bold;
 }
 

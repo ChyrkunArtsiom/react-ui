@@ -8,18 +8,18 @@ body {
     font-family: sans-serif;
 }
 
-.admin-certificates-table-container {
+.admin-orders-table-container {
     width: 80%;
     margin: 50px 10% 30px 10%;
     background-color: white;
     overflow-y: auto;
 }
 
-.admin-certificates-table-tablerow > .MuiTableCell-root {
+.admin-orders-table-tablerow > .MuiTableCell-root {
     padding: 8px 16px 8px 16px;
 }
 
-.admin-certificates-table-header > .MuiTableRow-head > .MuiTableCell-head {
+.admin-orders-table-header > .MuiTableRow-head > .MuiTableCell-head {
     font-weight: bold;
 }
 

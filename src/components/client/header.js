@@ -9,11 +9,10 @@ import {connect} from 'react-redux';
 import {bindActionCreators} from "redux";
 import {currentUserAction, unlogCurrentUserAction} from "../../actions/currentUserAction";
 import {itemsAreLoading} from "../../actions/itemsLoadingStatusAction";
-import Select from 'react-select'
+import AsyncSelect from 'react-select/async';
 import {tagsAreLoading, tagsAreLoaded} from "../../actions/tagsLoadingStatusAction";
 import {currentTagsAction, deleteCurrentTagsAction} from "../../actions/currentTagsAction";
 import {clearCurrentItemsAction} from "../../actions/currentItemsAction";
-import {resetPageAction} from "../../actions/itemsPageAction";
 import {getTokenFromLocalStorage} from "../localStorageMethods";
 
 
@@ -21,17 +20,18 @@ class Header extends React.Component {
     constructor(props) {
         super(props);
         let URLParams = new URLSearchParams(this.props.location.search);
-
+        this.timeout = 0;
         this.logOut = this.logOut.bind(this);
         this.handleTagSearchChange = this.handleTagSearchChange.bind(this);
         this.handleScrollToBottom = this.handleScrollToBottom.bind(this);
         this.handleChange = this.handleChange.bind(this);
+        this.loadTagsFromSelectInput = this.loadTagsFromSelectInput.bind(this);
         this.timeout = 0;
         this.state = {
             page: 1,
             size: 10,
             name: URLParams.get("name") ? URLParams.get("name") : '',
-            initialLoad: true
+            loadTags: true
         }
     }
 
@@ -57,7 +57,6 @@ class Header extends React.Component {
             }
             this.props.history.push('?' + URLParams.toString());
             this.props.clearCurrentItemsAction();
-            this.props.resetPageAction();
             this.props.itemsAreLoading();
 
         }, 1000);
@@ -78,13 +77,13 @@ class Header extends React.Component {
         this.props.history.push('?' + URLParams.toString());
         this.props.itemsAreLoading();
         this.props.clearCurrentItemsAction();
-        this.props.resetPageAction();
     }
 
     loadTags() {
-        if (this.state.initialLoad) {
+        if (this.state.loadTags) {
+            console.log("Loading tags");
             this.loadTagsFromURL();
-            this.setState({initialLoad: false});
+            this.setState({loadTags: false});
         }
 
         let tagsUri = `http://localhost:8080/esm/tags?page=${this.state.page}&size=${this.state.size}`;
@@ -110,6 +109,8 @@ class Header extends React.Component {
                 this.loadTagsIntoProps(response.json());
             } else {
                 console.error('Error: ', response);
+                this.logOut();
+                this.props.unlogCurrentUserAction();
             }
         });
     }
@@ -143,12 +144,66 @@ class Header extends React.Component {
                     if (response.ok) {
                         this.loadTagsIntoProps(response.json());
                     } else {
-                        console.error('Error: ', response);
+                        response.json().then(result => console.log(result));
+                        this.logOut();
+                        this.props.unlogCurrentUserAction();
                     }
                 });
             });
         }
+    }
 
+    loadTagsFromSelectInput(inputValue, callBack) {
+        console.log("LOAD TAGS FROM SELECT INPUT VALUE");
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+        }
+        if (!inputValue) {
+            callBack([]);
+        }
+
+        const searchedTag = this.props.currentTags.filter(tag => tag.value === inputValue);
+        if (searchedTag.length > 0) {
+            clearTimeout(this.timeout);
+            callBack(searchedTag);
+        } else {
+            this.timeout = setTimeout(() => {
+                let tagsUri = `http://localhost:8080/esm/tags?name=${inputValue}`;
+                console.log(tagsUri);
+
+                let authorization_header;
+                let token = getTokenFromLocalStorage();
+                if (token !== null) {
+                    authorization_header = "Bearer ".concat(token);
+                }
+
+                this.props.tagsAreLoading();
+
+                fetch(tagsUri, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept-Language': 'en_US',
+                        'Authorization': authorization_header
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        response.json().then(result => {
+                            if (result._embedded !== undefined) {
+                                this.props.currentTagsAction(result._embedded.tags);
+                                const searchedTag = this.props.currentTags.filter(tag => tag.value.match(new RegExp(`.*(${inputValue}).*`, 'i')));
+                                console.log(searchedTag);
+                                callBack(searchedTag);
+                            } else {
+                                callBack([]);
+                            }
+                        });
+                    } else {
+                        callBack([]);
+                    }
+                });
+            }, 1000);
+        }
     }
 
     loadTagsIntoProps(result) {
@@ -180,18 +235,30 @@ class Header extends React.Component {
         if (listOfTags) {
             listOfTags = listOfTags.split(',');
             listOfTags.forEach((tagFromList) => {
-               chosenTags = chosenTags.concat(this.props.currentTags.filter((tag) => tag.value === tagFromList));
+                chosenTags = chosenTags.concat(this.props.currentTags.filter((tag) => tag.value === tagFromList));
             });
         }
 
-        if (this.props.currentTags.length > 0 || true) {
-            tagSelect = <Select id="header-react-select"
-                                value={chosenTags}
-                                isMulti={true}
-                                options={this.props.currentTags}
-                                placeholder="Search by tag"
-                                onChange={this.handleTagSearchChange}
-                                onMenuScrollToBottom={this.handleScrollToBottom} />
+        if (this.props.isLogged && this.props.currentTags.length > 0) {
+            tagSelect = (
+                <div className="custom-select">
+                    <AsyncSelect id="header-react-select"
+                                 value={chosenTags}
+                                 isMulti
+                                 defaultOptions={this.props.currentTags}
+                                 placeholder="Search by tag"
+                                 onChange={this.handleTagSearchChange}
+                                 loadOptions={this.loadTagsFromSelectInput}
+                                 onInputChange={(newValue) => {
+                                     if (!newValue) {
+                                         clearTimeout(this.timeout);
+                                     }
+                                     return newValue;
+                                 }}
+                                 noOptionsMessage={() => "No such tag found"}
+                    />
+                </div>
+            )
         }
 
         if (this.props.isLogged) {
@@ -227,10 +294,7 @@ class Header extends React.Component {
                                onChange={this.handleChange}
                         />
                     </div>
-
-                    <div className="custom-select">
-                        {tagSelect}
-                    </div>
+                    {tagSelect}
                 </div>
             )
         }
@@ -282,12 +346,13 @@ class Header extends React.Component {
         this.checkIfLogged();
         if (this.props.isLogged && this.props.location.pathname === "/certificates") {
             this.loadTags();
+            this.setState({loadTags: false});
         }
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         console.log("HEADER DID UPDATE");
-        if (this.state.initialLoad && this.props.location.pathname === "/certificates") {
+        if (this.state.loadTags && this.props.location.pathname === "/certificates" && this.props.isLogged) {
             this.loadTags();
         }
     }
@@ -329,7 +394,6 @@ function matchDispatchToProps(dispatch) {
         tagsAreLoaded: tagsAreLoaded,
         currentTagsAction: currentTagsAction,
         clearCurrentItemsAction: clearCurrentItemsAction,
-        resetPageAction: resetPageAction,
         currentUserAction: currentUserAction,
         deleteCurrentTagsAction: deleteCurrentTagsAction
     }, dispatch);

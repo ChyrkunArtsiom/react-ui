@@ -1,54 +1,47 @@
 import {Component} from "react";
 import {Table, TableBody, TableCell, TableHead, TableRow, TableSortLabel} from "@material-ui/core";
-import "../../css/admin/admin-certificates-table.css";
+import "../../../css/admin/admin-orders-table.css";
 
-class CertificatesTable extends Component {
-    constructor(props) {
-        super(props);
-    }
-
+class OrdersTable extends Component {
     render() {
         return (
             <Table stickyHeader className="items-table">
-                <TableHead className="orders-table-head">
+                <TableHead className="admin-orders-table-header">
                     <TableRow>
                         <TableCell>
                             <TableSortLabel
-                                active={this.props.sortBy === "createDate"}
+                                active={this.props.sortBy === "id"}
                                 direction={this.props.sortOrder}
-                                onClick={() => this.props.requestSort("createDate")}
+                                onClick={() => this.props.requestSort("id")}
                             >
-                                Created
+                                Id
                             </TableSortLabel>
                         </TableCell>
                         <TableCell>
                             <TableSortLabel
-                                active={this.props.sortBy === "name"}
+                                active={this.props.sortBy === "cost"}
                                 direction={this.props.sortOrder}
-                                onClick={() => this.props.requestSort("name")}
+                                onClick={() => this.props.requestSort("cost")}
                             >
-                                Name
-                            </TableSortLabel>
-                        </TableCell>
-                        <TableCell>
-                            Tags
-                        </TableCell>
-                        <TableCell>
-                            <TableSortLabel
-                                active={this.props.sortBy === "description"}
-                                direction={this.props.sortOrder}
-                                onClick={() => this.props.requestSort("description")}
-                            >
-                                Description
+                                Cost
                             </TableSortLabel>
                         </TableCell>
                         <TableCell>
                             <TableSortLabel
-                                active={this.props.sortBy === "price"}
+                                active={this.props.sortBy === "purchaseDate"}
                                 direction={this.props.sortOrder}
-                                onClick={() => this.props.requestSort("price")}
+                                onClick={() => this.props.requestSort("purchaseDate")}
                             >
-                                Price
+                                Purchase date
+                            </TableSortLabel>
+                        </TableCell>
+                        <TableCell>
+                            <TableSortLabel
+                                active={this.props.sortBy === "user.name"}
+                                direction={this.props.sortOrder}
+                                onClick={() => this.props.requestSort("user.name")}
+                            >
+                                User
                             </TableSortLabel>
                         </TableCell>
                         <TableCell>
@@ -58,22 +51,24 @@ class CertificatesTable extends Component {
                 </TableHead>
                 <TableBody className="items-table-body">
                     {this.props.data.map((item, index) => {
-                        let tags = []
-                        item.tags.forEach((tag) => tags.push(tag.name));
-                        tags = tags.join(", ");
                         return (
-                            <TableRow key={index} onClick={() => this.props.classComponent.props.history.push(`/admin/certificates/${item.id}`)}>
-                                <TableCell>{new Date(item.createDate).toLocaleDateString()}</TableCell>
-                                <TableCell>{item.name}</TableCell>
-                                <TableCell>{tags}</TableCell>
-                                <TableCell>{item.description}</TableCell>
-                                <TableCell>${item.price}</TableCell>
+                            <TableRow className="admin-orders-table-tablerow" key={index} onClick={() => this.props.classComponent.props.history.push(`/admin/orders/${item.id}`)}>
+                                <TableCell>{item.id}</TableCell>
+                                <TableCell>{item.cost}</TableCell>
+                                <TableCell>{new Date(item.purchaseDate).toLocaleDateString()}</TableCell>
+                                <TableCell>{item.user.name}</TableCell>
                                 <TableCell>
                                     <div className="items-table-buttons-contaier">
-                                        <button className="edit-button">
+                                        <button className="edit-button" onClick={event => {
+                                            event.stopPropagation();
+                                            this.props.onEdit(item);
+                                        }}>
                                             Edit
                                         </button>
-                                        <button className="delete-button">
+                                        <button className="delete-button" onClick={event => {
+                                            event.stopPropagation();
+                                            this.props.onDelete(item);
+                                        }}>
                                             Delete
                                         </button>
                                     </div>
@@ -87,4 +82,4 @@ class CertificatesTable extends Component {
     }
 }
 
-export default CertificatesTable;
+export default OrdersTable;

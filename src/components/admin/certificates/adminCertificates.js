@@ -2,12 +2,19 @@ import React, {Component} from "react";
 import CertificatesTable from "./certificatesTable";
 import orderBy from "lodash/orderBy";
 import {bindActionCreators} from "redux";
-import {itemsAreLoaded, itemsAreLoading} from "../../actions/itemsLoadingStatusAction";
+import {itemsAreLoaded, itemsAreLoading} from "../../../actions/itemsLoadingStatusAction";
 import {connect} from "react-redux";
 import Spinner from "react-bootstrap/Spinner";
-import "../../css/admin/admin-certificates.css";
+import "../../../css/admin/admin-certificates.css";
 import {Link} from "react-router-dom";
-import ErrorForm from "./errorForm";
+import ErrorForm from "../errorForm";
+import AdminManageCertificate from "./adminManageCertificate";
+import {hideManageForm, showManageForm} from "../../../actions/manageFormAction";
+import InfoForm from "../adminInfoForm";
+import {putItemToEditForm} from "../../../actions/itemToEditAction";
+import AdminDeleteForm from "../adminDeleteForm";
+import {getTokenFromLocalStorage} from "../../localStorageMethods";
+import {buildLastPageButton, buildPageButtons} from "../paginationButtonsBuilder";
 
 class AdminCertificates extends Component {
     constructor(props) {
@@ -15,8 +22,8 @@ class AdminCertificates extends Component {
         const defaultSortBy = "createDate";
         const defaultSortOrder = "asc";
         let URLParams = new URLSearchParams(this.props.location.search);
-        let size = Number.parseInt(URLParams.get("size"));
         let page = Number.parseInt(URLParams.get("page"));
+        let size = Number.parseInt(URLParams.get("size"));
         let filterName = URLParams.get("name");
         let filterDescription = URLParams.get("description");
         let tag = URLParams.get("tag");
@@ -31,12 +38,24 @@ class AdminCertificates extends Component {
             filterTags: tag ? tag : '',
             filterText: buildFilterText(URLParams),
             showError: false,
-            error: null
+            error: null,
+            showInfo: false,
+            typeOfInfo: '',
+            typeOfAction: '',
+            managedCertificate: null,
+            showDeleteForm: false,
+            certificateToDelete: null
         }
         this.onSizeChange = this.onSizeChange.bind(this);
         this.onFilterTextChange = this.onFilterTextChange.bind(this);
         this.onSubmitFilterText = this.onSubmitFilterText.bind(this);
         this.closeErrorForm = this.closeErrorForm.bind(this);
+        this.closeInfoForm = this.closeInfoForm.bind(this);
+        this.saveCertificateToState = this.saveCertificateToState.bind(this);
+        this.onEdit = this.onEdit.bind(this);
+        this.onDelete = this.onDelete.bind(this);
+        this.onCertificateSuccessfulEdit = this.onCertificateSuccessfulEdit.bind(this);
+        this.deleteCertificate = this.deleteCertificate.bind(this);
     }
 
     render() {
@@ -45,10 +64,45 @@ class AdminCertificates extends Component {
         let spinner = null;
         let table = null;
         let errorForm = null;
+        let infoForm = null;
+        let deleteForm = null;
         let pagination = null;
+        let manageCertificateForm = null;
 
         if (this.state.showError) {
             errorForm = <ErrorForm key="error" error={this.state.error} onClick={() => this.closeErrorForm}/>
+        }
+
+        if (this.state.showDeleteForm) {
+            deleteForm = <AdminDeleteForm
+                key="delete-form"
+                item= {this.state.certificateToDelete}
+                type="certificate"
+                onDelete={this.deleteCertificate}
+                onCancel={() => this.setState({
+                    showDeleteForm: false,
+                    certificateToDelete: null
+                })}
+            />
+        }
+
+        if (this.state.showInfo) {
+            infoForm = <InfoForm
+                key="info"
+                item={this.state.managedCertificate}
+                type={this.state.typeOfInfo}
+                action={this.state.typeOfAction}
+                onClick={() => this.closeInfoForm}
+            />
+        }
+
+        if (this.props.isShownManageForm) {
+            manageCertificateForm = <AdminManageCertificate
+                key="manage-certificate"
+                item={this.props.itemToEdit}
+                onCreate={this.saveCertificateToState}
+                onEdit={this.onCertificateSuccessfulEdit}
+            />
         }
 
         if (loading) {
@@ -59,7 +113,7 @@ class AdminCertificates extends Component {
         } else {
             if (items.length > 0) {
                 table = (
-                    <div key="items-table-container" className="items-table-container">
+                    <div key="admin-certificates-table-container" className="admin-certificates-table-container">
                         <CertificatesTable
                             data={orderBy(
                                 this.state.items,
@@ -70,6 +124,8 @@ class AdminCertificates extends Component {
                             sortOrder={this.state.sortOrder}
                             sortBy={this.state.sortBy}
                             classComponent={this}
+                            onEdit={this.onEdit}
+                            onDelete={this.onDelete}
                         />
                     </div>
                 );
@@ -86,13 +142,14 @@ class AdminCertificates extends Component {
                                 onClick={() => {
                                     this.props.itemsAreLoading();
                                     this.setState({page: 1});
+                                    this.closeInfoForm();
                                 }}
                             >&#xab;</Link>
                             {buildPageButtons(this, this.state.page)}
                             {buildLastPageButton(this)}
                         </div>
                         <div className="size-select-container">
-                            <select id="size-select" onChange={this.onSizeChange}>
+                            <select defaultValue={this.state.size} id="size-select" onChange={this.onSizeChange}>
                                 <option value="10">10</option>
                                 <option value="20">20</option>
                                 <option value="50">50</option>
@@ -106,6 +163,8 @@ class AdminCertificates extends Component {
         return (
             [
                 errorForm,
+                infoForm,
+                deleteForm,
                 <div key="filter-form-container" className="filter-form-container">
                     <form className="filter-text-form" onSubmit={this.onSubmitFilterText}>
                         <input
@@ -120,7 +179,8 @@ class AdminCertificates extends Component {
                 </div>,
                 spinner,
                 table,
-                pagination
+                pagination,
+                manageCertificateForm
             ]
         );
     }
@@ -142,6 +202,7 @@ class AdminCertificates extends Component {
 
     componentDidMount() {
         console.log("DID MOUNT");
+        document.title = "Certificates";
         this.loadItems();
     }
 
@@ -155,11 +216,11 @@ class AdminCertificates extends Component {
         }
     }
 
-    async loadItems() {
-        let certificatesUri = await buildItemsURI(this);
+    loadItems() {
+        let certificatesUri = buildItemsURI(this);
         console.log(certificatesUri);
 
-        await fetch(certificatesUri, {
+        fetch(certificatesUri, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -190,16 +251,19 @@ class AdminCertificates extends Component {
         this.props.history.push('?' + URLParams.toString());
         this.setState({size: Number.parseInt(event.target.value), page: 1});
         this.props.itemsAreLoading();
+        this.closeInfoForm();
     }
 
     onFilterTextChange(event) {
         this.setState({
             filterText: event.target.value
         });
+        this.closeInfoForm();
     }
 
     onSubmitFilterText(event) {
         event.preventDefault();
+        this.closeInfoForm();
         let URLParams = new URLSearchParams(this.props.location.search);
         URLParams.delete("page");
         URLParams.delete("name");
@@ -216,21 +280,18 @@ class AdminCertificates extends Component {
             this.setState({filterName: name});
             URLParams.set("name", name);
         }
-        console.log("name ", name);
 
         let description = extractDescriptionToFilterBy(this.state.filterText);
         if (description) {
             this.setState({filterDescription: description});
             URLParams.set("description", description);
         }
-        console.log("desc ", description);
 
         let tags = extractTagsToFilterBy(this.state.filterText);
         if (tags.length > 0) {
             this.setState({filterTags: tags.join(',')});
             URLParams.set("tag", tags.join(','));
         }
-        console.log("tags ", tags.join(','));
 
         this.props.history.push('?' + URLParams.toString());
         this.setState({page: 1});
@@ -240,9 +301,81 @@ class AdminCertificates extends Component {
     closeErrorForm() {
         this.setState({showError: false});
     }
+
+    closeInfoForm() {
+                this.setState({
+                    showInfo: false,
+                    typeOfInfo: '',
+                    typeOfAction: '',
+                    managedCertificate: null
+                });
+    }
+
+    saveCertificateToState(certificate) {
+        this.setState({
+            managedCertificate: certificate,
+            typeOfInfo: "certificate",
+            typeOfAction: "create",
+            showInfo: true});
+    }
+
+    onCertificateSuccessfulEdit(certificate) {
+        this.setState({
+            managedCertificate: certificate,
+            typeOfInfo: "certificate",
+            typeOfAction: "edit",
+            showInfo: true});
+    }
+
+    onEdit(certificate) {
+        this.props.showManageForm();
+        this.props.putItemToEditForm(certificate);
+    }
+
+    onDelete(certificate) {
+        this.setState({
+            showDeleteForm: true,
+            certificateToDelete: certificate.id
+        })
+    }
+
+    async deleteCertificate() {
+        let tagsUri = `http://localhost:8080/esm/certificates/${this.state.certificateToDelete}`;
+        console.log(tagsUri);
+
+        let authorization_header;
+        let token = getTokenFromLocalStorage();
+        if (token !== null) {
+            authorization_header = "Bearer ".concat(token);
+        }
+
+        await fetch(tagsUri, {
+            method: 'DELETE',
+            headers: {
+                'Accept-Language': 'en_US',
+                'Authorization': authorization_header,
+            }
+        }).then(response => {
+            if (response.ok) {
+                this.setState({
+                    managedCertificate: {id: this.state.certificateToDelete},
+                    typeOfInfo: "certificate",
+                    typeOfAction: "delete",
+                    showInfo: true
+                });
+                this.props.itemsAreLoading();
+            } else {
+                response.json().then((result) => this.setState({error: result, showError: true}));
+            }
+        });
+        await this.setState({
+            showDeleteForm: false,
+            certificateToDelete: null
+        });
+    }
 }
 
-async function buildItemsURI(component) {
+function buildItemsURI(component) {
     let name = '';
     let desc = '';
     let tag = '';
@@ -259,56 +392,9 @@ async function buildItemsURI(component) {
     return certificatesUri;
 }
 
-function buildPageButtons(component, page) {
-    let buttons = [];
-    for (let iteratedPage = page - 2; iteratedPage <= page + 2; iteratedPage++) {
-        if (iteratedPage >= 1 && iteratedPage <= component.state.lastPage) {
-            let button = (
-                <Link
-                    key={`button-${iteratedPage}`}
-                    className={component.state.page === iteratedPage ? "current-page-button" : "page-button"}
-                    to={() => {
-                        let URLParams = new URLSearchParams(component.props.location.search);
-                        URLParams.set("page", iteratedPage);
-                        return component.props.location.pathname + "?" + URLParams.toString();
-                    }}
-                    onClick={() => {
-                        component.props.itemsAreLoading();
-                        component.setState({page: iteratedPage});
-                    }}
-                >{iteratedPage}</Link>
-            );
-            buttons.push(button);
-        }
-    }
-    return buttons;
-}
-
-function buildLastPageButton(component) {
-    let lastPage = component.state.lastPage ? component.state.lastPage : 1;
-    return (
-        <Link
-            className="page-button"
-            to={() => {
-                let URLParams = new URLSearchParams(component.props.location.search);
-                URLParams.set("page", lastPage);
-                return component.props.location.pathname + "?" + URLParams.toString();
-            }}
-            onClick={() => {
-                component.props.itemsAreLoading();
-                component.setState({page: lastPage});
-            }}
-        >&#xbb;</Link>
-    );
-}
-
 function extractNameToFilterBy(text) {
-    console.log(text);
     const reg = new RegExp('(?<=^|\\s)[\\p{L}\\w]+(?!\\S)', 'u');
-    console.log(reg.exec(text));
-    console.log(reg.unicode)
     const arr = text.match(reg) || [];
-    console.log(arr);
     if (arr) {
         return arr[0];
     } else {
@@ -355,7 +441,9 @@ function buildFilterText(URLParams) {
 
 function mapStateToProps(state) {
     return {
-        itemsLoading: state.itemsLoading
+        itemsLoading: state.itemsLoading,
+        isShownManageForm: state.isShownManageForm,
+        itemToEdit: state.itemToEdit
     };
 }
 
@@ -363,6 +451,9 @@ function matchDispatchToProps(dispatch) {
     return bindActionCreators({
         itemsAreLoading: itemsAreLoading,
         itemsAreLoaded: itemsAreLoaded,
+        showManageForm: showManageForm,
+        hideManageForm: hideManageForm,
+        putItemToEditForm: putItemToEditForm
     }, dispatch);
 }
 

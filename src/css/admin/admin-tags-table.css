@@ -8,18 +8,18 @@ body {
     font-family: sans-serif;
 }
 
-.admin-certificates-table-container {
-    width: 80%;
-    margin: 50px 10% 30px 10%;
+.admin-tags-table-container {
+    width: 40%;
+    margin: 50px 0 30px 0;
     background-color: white;
     overflow-y: auto;
 }
 
-.admin-certificates-table-tablerow > .MuiTableCell-root {
-    padding: 8px 16px 8px 16px;
+.admin-tags-table-tablerow > .MuiTableCell-root {
+    padding: 4px 16px 4px 16px;
 }
 
-.admin-certificates-table-header > .MuiTableRow-head > .MuiTableCell-head {
+.admin-tags-table-header > .MuiTableRow-head > .MuiTableCell-head {
     font-weight: bold;
 }
 
@@ -33,21 +33,17 @@ body {
     justify-content: space-evenly;
 }
 
-.edit-button, .delete-button {
+.delete-button {
     width: 70px;
     color: white;
     border-radius: 5px;
     border: none;
 }
 
-.edit-button {
-    background-color: #eeac4e;
-}
-
 .delete-button {
     background-color: #d7524f;
 }
 
-.edit-button:hover, .delete-button:hover {
+.delete-button:hover {
     color: black;
 }

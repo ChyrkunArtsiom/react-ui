@@ -3,12 +3,10 @@ import '../../css/admin/admin-header.css';
 import {bindActionCreators} from "redux";
 import {unlogCurrentUserAction} from "../../actions/currentUserAction";
 import {connect} from "react-redux";
+import {showManageForm} from "../../actions/manageFormAction";
+import {deleteItemFromEditForm} from "../../actions/itemToEditAction";
 
 class AdminHeader extends Component {
-    constructor(props) {
-        super(props);
-    }
-
     logOut() {
         localStorage.removeItem('login');
         localStorage.removeItem('jwt');
@@ -17,17 +15,27 @@ class AdminHeader extends Component {
     }
 
     render() {
+        let addButton = null;
+
+        if (!this.props.location.pathname.includes("admin/users")) {
+            addButton = (
+                <div className="admin-add-new-button-container">
+                    <button className="admin-add-new-button" onClick={() => {
+                        this.props.showManageForm();
+                        this.props.deleteItemFromEditForm();
+                    }}>
+                        Add new
+                    </button>
+                </div>
+            );
+        }
 
         return (
             <div className="admin-header">
                 <div className="admin-logo-container">
                     Admin UI
                 </div>
-                <div className="admin-add-new-button-container">
-                    <button className="admin-add-new-button">
-                        Add new
-                    </button>
-                </div>
+                {addButton}
                 <div className="admin-login-container">
                     <div className="admin-login-status">
                         <a href="#">{this.props.loggedUser}</a>
@@ -56,7 +64,9 @@ function mapStateToProps(state) {
 
 function matchDispatchToProps(dispatch) {
     return bindActionCreators({
-        unlogCurrentUserAction: unlogCurrentUserAction
+        unlogCurrentUserAction: unlogCurrentUserAction,
+        showManageForm: showManageForm,
+        deleteItemFromEditForm: deleteItemFromEditForm
     }, dispatch);
 }
 

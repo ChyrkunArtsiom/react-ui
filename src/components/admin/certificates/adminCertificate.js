@@ -1,6 +1,6 @@
 import React, {Component} from "react";
-import ErrorForm from "./errorForm";
-import "../../css/admin/admin-certificate.css";
+import ErrorForm from "../errorForm";
+import "../../../css/admin/admin-certificate.css";
 import {Table, TableBody, TableCell, TableHead, TableRow} from "@material-ui/core";
 
 class AdminCertificate extends Component {
@@ -15,7 +15,6 @@ class AdminCertificate extends Component {
     }
 
     render() {
-        let error = this.state.error;
         let certificate = this.state.certificate;
         let errorForm = null;
         let certificateForm = null;
@@ -74,6 +73,7 @@ class AdminCertificate extends Component {
     }
 
     componentDidMount() {
+        document.title = `Certificate №${this.props.match.params.id}`;
         let tagsUri = `http://localhost:8080/esm/certificates/${this.props.match.params.id}`;
         console.log(tagsUri);
         fetch(tagsUri, {

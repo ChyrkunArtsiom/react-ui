@@ -6,6 +6,8 @@ import itemsLoadingStatusReducer from "./itemsLoadingStatusReducer";
 import currentTagsReducer from "./currentTagsReducer";
 import tagsLoadingStatusReducer from "./tagsLoadingStatusReducer";
 import currentItemsPageReducer from "./currentItemsPageReducer";
+import showManageFormReducer from "./showManageFormReducer";
+import itemToEditReducer from "./itemToEditReducer";
 
 const rootReducer = combineReducers({
     isLogged: loggedStatusReducer,
@@ -14,7 +16,9 @@ const rootReducer = combineReducers({
     itemsLoading: itemsLoadingStatusReducer,
     currentTags: currentTagsReducer,
     tagsLoadingStatus: tagsLoadingStatusReducer,
-    currentPage: currentItemsPageReducer
+    currentPage: currentItemsPageReducer,
+    isShownManageForm: showManageFormReducer,
+    itemToEdit: itemToEditReducer
 });
 
 export default rootReducer;

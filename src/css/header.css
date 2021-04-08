@@ -8,12 +8,6 @@ body {
     font-family: sans-serif;
 }
 
-input {
-    font-family: sans-serif;
-    outline: none;
-    border: none;
-}
-
 .header {
     width: 100%;
     height: 70px;
@@ -64,6 +58,7 @@ input {
     align-items: center;
     width: 60%;
     margin-right: auto;
+    margin-left: auto;
 }
 
 .search-input {
