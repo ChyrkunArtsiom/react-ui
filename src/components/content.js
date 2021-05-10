@@ -7,6 +7,7 @@ import Certificate from "./client/certificate";
 import Orders from "./client/orders";
 import Order from "./client/order";
 import CreateOrder from "./client/create-order";
+import Register from "./client/register";
 
 class Content extends React.Component {
     render() {
@@ -19,6 +20,7 @@ class Content extends React.Component {
                     <Route path="/orders/create" component={CreateOrder} />
                     <Route path="/orders/:id" component={Order} />
                     <Route path="/orders" component={Orders} />
+                    <Route exact path="/signup" component={Register} />
                     <Route component={ErrorPage} />
                 </Switch>
             </div>

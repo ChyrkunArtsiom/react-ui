@@ -14,6 +14,8 @@ import {tagsAreLoading, tagsAreLoaded} from "../../actions/tagsLoadingStatusActi
 import {currentTagsAction, deleteCurrentTagsAction} from "../../actions/currentTagsAction";
 import {clearCurrentItemsAction} from "../../actions/currentItemsAction";
 import {getTokenFromLocalStorage} from "../localStorageMethods";
+import {Dropdown} from "react-bootstrap";
+import {cleanItemsAction} from "../../actions/cleanItemsAction";
 
 
 class Header extends React.Component {
@@ -58,13 +60,13 @@ class Header extends React.Component {
             this.props.history.push('?' + URLParams.toString());
             this.props.clearCurrentItemsAction();
             this.props.itemsAreLoading();
-
+            this.props.cleanItemsAction();
         }, 1000);
     }
 
     handleTagSearchChange(event) {
         let URLParams = new URLSearchParams(this.props.location.search);
-        URLParams.delete("name");
+/*        URLParams.delete("name");*/
         URLParams.delete("page");
         URLParams.delete("tag");
         let tags = '';
@@ -77,6 +79,7 @@ class Header extends React.Component {
         this.props.history.push('?' + URLParams.toString());
         this.props.itemsAreLoading();
         this.props.clearCurrentItemsAction();
+        this.props.cleanItemsAction();
     }
 
     loadTags() {
@@ -232,11 +235,21 @@ class Header extends React.Component {
         let listOfTags = URLParams.get("tag");
         let chosenTags = [];
         let adminPageButton = null;
+        let orderLink;
+        let ordersLink;
         if (listOfTags) {
             listOfTags = listOfTags.split(',');
             listOfTags.forEach((tagFromList) => {
                 chosenTags = chosenTags.concat(this.props.currentTags.filter((tag) => tag.value === tagFromList));
             });
+        }
+
+        if (this.props.isLogged) {
+            orderLink = '/orders/create';
+            ordersLink = '/orders';
+        } else {
+            orderLink = '/';
+            ordersLink = '/';
         }
 
         if (this.props.isLogged && this.props.currentTags.length > 0) {
@@ -279,7 +292,9 @@ class Header extends React.Component {
                 </Link>
             );
             logout_status_form.push(
-                <a href="#" key='logout_status'>Sign up</a>
+                <Link key='logout_status' to='/signup'>
+                    Sign up
+                </Link>
             );
         }
 
@@ -319,6 +334,31 @@ class Header extends React.Component {
                         <h1>Logo</h1>
                     </div>
                 </div>
+                <div className="header-dropdown-menu-container">
+                    <Dropdown className="header-dropdown">
+                        <Dropdown.Toggle>
+                            Pages
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            <Dropdown.Item as={Link}
+                                           to="/certificates"
+                                           onClick={() => {
+                                               this.setState({name: ''});
+                                               this.setState({loadTags: true});
+                                           }}>
+                                Certificates
+                            </Dropdown.Item>
+                            <Dropdown.Item as={Link}
+                                           to={ordersLink}
+                                           onClick={() => {
+                                               this.props.deleteCurrentTagsAction();
+                                           }}
+                            >
+                                Orders
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </div>
                 {adminPageButton}
                 {search_form}
                 <div className="login-container">
@@ -326,7 +366,7 @@ class Header extends React.Component {
                         <a href="#"><img src={favorite_image} alt='favorite'/></a>
                     </div>
                     <div className="basket">
-                        <Link to='/orders/create'>
+                        <Link to={orderLink}>
                             <img className="test-img" src={cart_image} alt='Logo'/>
                         </Link>
                     </div>
@@ -352,6 +392,8 @@ class Header extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         console.log("HEADER DID UPDATE");
+/*        let URLParams = new URLSearchParams(this.props.location.search);
+        this.setState({name: URLParams.get("name") ? URLParams.get("name") : '',});*/
         if (this.state.loadTags && this.props.location.pathname === "/certificates" && this.props.isLogged) {
             this.loadTags();
         }
@@ -395,7 +437,8 @@ function matchDispatchToProps(dispatch) {
         currentTagsAction: currentTagsAction,
         clearCurrentItemsAction: clearCurrentItemsAction,
         currentUserAction: currentUserAction,
-        deleteCurrentTagsAction: deleteCurrentTagsAction
+        deleteCurrentTagsAction: deleteCurrentTagsAction,
+        cleanItemsAction: cleanItemsAction
     }, dispatch);
 }
 

@@ -5,8 +5,19 @@ import {unlogCurrentUserAction} from "../../actions/currentUserAction";
 import {connect} from "react-redux";
 import {showManageForm} from "../../actions/manageFormAction";
 import {deleteItemFromEditForm} from "../../actions/itemToEditAction";
+import {Dropdown} from "react-bootstrap";
+import {Link, Redirect} from "react-router-dom";
+import addButtonVisibilityStatus from "../../reducers/addButtonVisibilityStatus";
 
 class AdminHeader extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            redirectToClient: false
+        }
+    }
+
+
     logOut() {
         localStorage.removeItem('login');
         localStorage.removeItem('jwt');
@@ -17,7 +28,11 @@ class AdminHeader extends Component {
     render() {
         let addButton = null;
 
-        if (!this.props.location.pathname.includes("admin/users")) {
+        if (this.state.redirectToClient) {
+            return <Redirect to="/" />;
+        }
+
+        if (this.props.addButtonVisibilityStatus) {
             addButton = (
                 <div className="admin-add-new-button-container">
                     <button className="admin-add-new-button" onClick={() => {
@@ -34,6 +49,34 @@ class AdminHeader extends Component {
             <div className="admin-header">
                 <div className="admin-logo-container">
                     Admin UI
+                </div>
+                <div className="header-admin-dropdown-menu-container">
+                    <Dropdown className="admin-header-dropdown">
+                        <Dropdown.Toggle>
+                            Pages
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            <Dropdown.Item as={Link}
+                                           to="/admin/certificates">
+                                Certificates
+                            </Dropdown.Item>
+                            <Dropdown.Item as={Link}
+                                           to="/admin/orders">
+                                Orders
+                            </Dropdown.Item>
+                            <Dropdown.Item as={Link}
+                                           to="/admin/users">
+                                Users
+                            </Dropdown.Item>
+                            <Dropdown.Item as={Link}
+                                           to="/admin/tags">
+                                Tags
+                            </Dropdown.Item>
+                            <Dropdown.Item href="/">
+                                Back to Client
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
                 </div>
                 {addButton}
                 <div className="admin-login-container">
@@ -57,8 +100,8 @@ class AdminHeader extends Component {
 
 function mapStateToProps(state) {
     return {
-        isLogged: state.isLogged,
-        loggedUser: state.loggedUser
+        loggedUser: state.loggedUser,
+        addButtonVisibilityStatus: state.addButtonVisibilityStatus
     };
 }
 

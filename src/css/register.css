@@ -1,0 +1,142 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    background-color: #f0f0f1;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+}
+
+.register-form-container {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border: 0;
+    width: 50%;
+    border-radius: 5px;
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.register-form-header {
+    display: flex;
+    align-items: center;
+    background-color: #bcbcbd;
+    color: white;
+    height: 70px;
+    padding: 10px 0 10px 30px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 5px 5px 0 0;
+}
+
+.register-header-text {
+    margin: 0;
+}
+
+.register-form {
+    padding: 10px 20px 10px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: space-between;
+}
+
+.register-row-form {
+    width: 40%;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.register-row-form input {
+    background-color: #FFFFFF;
+    border: 1px solid #D6D9DC;
+    border-radius: 3px;
+    width: 100%;
+    padding: 7px;
+    font-size: 16px;
+}
+
+.register-row-form label {
+    color: #bbbbbd;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.register-error-text {
+    width: 100%;
+    min-height: 24px;
+    font-style: italic;
+    color: red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0 10px 0;
+}
+
+.register-buttons {
+    width: 40%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    margin-left: auto;
+}
+
+.signup-button {
+    font-size: 20px;
+    width: 170px;
+    height: 40px;
+    cursor: pointer;
+    border-radius: 5px;
+    background-color: #5fcf87;
+    border: none;
+    color: white;
+    margin-left: 30px;
+}
+
+.signup-button:hover {
+    background-color: #26c65c;
+}
+
+.info-register-container {
+    width: 40%;
+    min-height: 50px;
+    border-radius: 5px;
+    background-color: #dff2de;
+    color: green;
+    margin: 10px 10% 10px 10%;
+    display: flex;
+    align-items: center;
+}
+
+.circle-cross {
+    height: 30px;
+    width: 30px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.register-info-link {
+    color: green;
+    text-decoration: underline;
+}
+
+.register-info-link:hover {
+    color: green;
+}
+
+
+

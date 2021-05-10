@@ -13,6 +13,7 @@ import {getTokenFromLocalStorage} from "../../localStorageMethods";
 import "../../../css/admin/admin-tags.css";
 import AdminManageTag from "./adminManageTag";
 import {buildLastPageButton, buildPageButtons} from "../paginationButtonsBuilder";
+import {hideAddButtonAction, showAddButtonAction} from "../../../actions/showAddButtonAction";
 
 class AdminTags extends Component {
     constructor(props) {
@@ -148,6 +149,7 @@ class AdminTags extends Component {
     componentDidMount() {
         console.log("DID MOUNT");
         document.title = "Tags";
+        this.props.showAddButtonAction();
         this.loadItems();
     }
 
@@ -159,6 +161,10 @@ class AdminTags extends Component {
         if (prevState.showError) {
             this.setState({showError: false});
         }
+    }
+
+    componentWillUnmount() {
+        this.props.hideAddButtonAction();
     }
 
     loadItems() {
@@ -287,7 +293,9 @@ function matchDispatchToProps(dispatch) {
         itemsAreLoading: itemsAreLoading,
         itemsAreLoaded: itemsAreLoaded,
         showManageForm: showManageForm,
-        hideManageForm: hideManageForm
+        hideManageForm: hideManageForm,
+        showAddButtonAction: showAddButtonAction,
+        hideAddButtonAction: hideAddButtonAction
     }, dispatch);
 }
 

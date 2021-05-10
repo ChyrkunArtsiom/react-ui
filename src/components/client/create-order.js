@@ -1,11 +1,10 @@
 import React, {Component} from "react";
 import "../../css/create-order.css";
 import "../../css/react-tags-style.css";
-import Select from "react-select";
 import {Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@material-ui/core";
 import {getTokenFromLocalStorage, getUserFromLocalStorage} from "../localStorageMethods";
 import close from "../../images/close-24px.svg";
-import cart_image from "../../images/shopping_cart-24px.svg";
+import AsyncSelect from "react-select/async/dist/react-select.esm";
 
 class CreateOrder extends Component {
     constructor(props) {
@@ -21,8 +20,7 @@ class CreateOrder extends Component {
             showErrorForm: false
         }
         this.handleChange = this.handleChange.bind(this);
-        this.handleScrollToBottom = this.handleScrollToBottom.bind(this);
-        this.changeCertificateName = this.changeCertificateName.bind(this);
+        this.loadCertificatesFromSelectInput = this.loadCertificatesFromSelectInput.bind(this);
     }
 
     render() {
@@ -33,20 +31,25 @@ class CreateOrder extends Component {
                 </div>
                 <div className="add-order-inner-container">
                     <div className='filter-certificate-form'>
-                        <div className="container-for-name-search">
-                            <label className='order-label' htmlFor='certificateName'>Show certificates by name:</label>
-                            <input id='certificateName' name='certificateName' type='text' value={this.state.certificateName} onChange={this.changeCertificateName} />
-                        </div>
                         <div className="container-for-select">
                             <label className='order-label' htmlFor='select-certificate'>Add certificate to the order:</label>
-                            <Select id="select-certificate"
-                                    value={this.state.addedCertificates}
-                                    className="select-certificate"
-                                    isMulti={true}
-                                    options = {this.state.certificatesForSelect}
-                                    placeholder="Select certificate"
-                                    onChange={this.handleChange}
-                                    onMenuScrollToBottom={this.handleScrollToBottom} />
+                            <AsyncSelect
+                                id="select-certificate"
+                                isMulti
+                                className="select-certificate"
+                                value={this.state.addedCertificates}
+                                placeholder="Choose certificates..."
+                                defaultOptions={this.state.certificatesForSelect}
+                                loadOptions={this.loadCertificatesFromSelectInput}
+                                onChange={this.handleChange}
+                                onInputChange={(newValue) => {
+                                    if (!newValue) {
+                                        clearTimeout(this.timeout);
+                                    }
+                                    return newValue;
+                                }}
+                                noOptionsMessage={() => "No such certificate found"}
+                            />
                         </div>
                     </div>
                     <TableContainer className="certificates-table-container">
@@ -92,7 +95,6 @@ class CreateOrder extends Component {
     }
 
     componentDidMount() {
-        this.loadCertificates();
         this.loadCertificatesFromLocalStorage();
     }
 
@@ -103,40 +105,47 @@ class CreateOrder extends Component {
         localStorage.setItem("savedCertificates", saveToLocalStorageCertificates.join(','));
     }
 
-    handleScrollToBottom() {
-        this.setState({
-            page : this.state.page + 1
-        });
-        this.loadCertificates();
-    }
-
-    changeCertificateName(event) {
-        this.setState({certificateName: event.target.value});
+    loadCertificatesFromSelectInput(inputValue, callBack) {
+        console.log("Load certificates from select");
         if (this.timeout) {
             clearTimeout(this.timeout);
         }
-        this.timeout = setTimeout(() => {
-            this.setState({certificatesForSelect: [], page: 1});
-            this.loadCertificates();
-        }, 1000);
-    }
+        if (!inputValue || inputValue.trim().length < 3) {
+            callBack([]);
+        }
+        const searchedCertificate = this.state.certificatesForSelect.filter(certificate => certificate.label === inputValue);
+        if (searchedCertificate.length > 0) {
+            clearTimeout(this.timeout);
+            callBack(searchedCertificate);
+        } else {
+            this.timeout = setTimeout(() => {
+                let certificatesURI = `http://localhost:8080/esm/certificates?name=${inputValue}`;
+                console.log(certificatesURI);
 
-    loadCertificates() {
-        let certificatesUri = `http://localhost:8080/esm/certificates?page=${this.state.page}&size=${this.state.size}&name=${this.state.certificateName ? this.state.certificateName : ''}`;
-
-        fetch(certificatesUri, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept-Language': 'en_US',
-            }
-        }).then(response => {
-            if (response.ok) {
-                this.loadCertificatesIntoState(response.json());
-            } else {
-                response.json().then((result) => this.setState({error: result}));
-            }
-        });
+                fetch(certificatesURI, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept-Language': 'en_US'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        response.json().then(result => {
+                            if (result._embedded !== undefined) {
+                                const certificates = convertCertificatesForSelect(result._embedded.certificates);
+                                console.log(certificates);
+                                this.setState({certificatesForSelect: [...this.state.certificatesForSelect, ...certificates]});
+                                callBack(certificates);
+                            } else {
+                                callBack([]);
+                            }
+                        });
+                    } else {
+                        callBack([]);
+                    }
+                });
+            }, 1000)
+        }
     }
 
     loadCertificatesFromLocalStorage() {
@@ -159,7 +168,7 @@ class CreateOrder extends Component {
         }).then(response => {
             if (response.ok) {
                 response.json().then((result) => {
-                    let convertedArr = convertCertificatesForReactSelect(Array.of(result));
+                    let convertedArr = convertCertificatesForSelect(Array.of(result));
                     this.setState({addedCertificates: [...this.state.addedCertificates, ...convertedArr]});
                     this.setState({certificatesForSelect: [...this.state.certificatesForSelect, ...convertedArr]});
                 });
@@ -210,17 +219,14 @@ class CreateOrder extends Component {
         });
         localStorage.removeItem("savedCertificates");
     }
+}
 
-    loadCertificatesIntoState(result) {
-        result.then(result => {
-            if (result._embedded !== undefined) {
-                let convertedArr = convertCertificatesForReactSelect(result._embedded.certificates);
-                let arr = [...this.state.certificatesForSelect, ...convertedArr];
-                arr = deleteDuplicates(arr);
-                this.setState({certificatesForSelect: arr});
-            }
-        })
-    }
+function convertCertificatesForSelect(certificates) {
+    certificates.forEach((certificate) => {
+        certificate.label = certificate.name;
+        certificate.value = certificate.id;
+    });
+    return certificates;
 }
 
 function convertCertificatesForReactSelect(array) {
@@ -241,14 +247,6 @@ function convertCertificatesForReactSelect(array) {
             });
     }
     return converted;
-}
-
-function deleteDuplicates(arr) {
-    arr = arr.filter((element, index, self) =>
-        index === self.findIndex((t) => (t.value === element.value
-        ))
-    );
-    return arr;
 }
 
 export default CreateOrder

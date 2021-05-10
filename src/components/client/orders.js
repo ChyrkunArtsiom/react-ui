@@ -1,9 +1,9 @@
 import React, {Component} from "react";
 import Spinner from "react-bootstrap/Spinner";
 import "../../css/orders.css";
-import {AddButton, ToBottomButton, ToTopButton} from "./list-buttons";
+import {AddButton} from "./list-buttons";
 import {bindActionCreators} from "redux";
-import {clearCurrentItemsAction, currentItemsAction} from "../../actions/currentItemsAction";
+import {clearCurrentItemsAction} from "../../actions/currentItemsAction";
 import {itemsAreLoaded, itemsAreLoading} from "../../actions/itemsLoadingStatusAction";
 import {connect} from "react-redux";
 import {Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@material-ui/core";
@@ -14,16 +14,17 @@ class Orders extends Component {
         super(props);
         this.state = {
             scrollPosition: 0,
-            redirectTo: ''
+            redirectTo: '',
+            orders: []
         }
     }
 
     render() {
         console.log("Orders render");
         const loading = this.props.itemsLoading;
-        const items = this.props.currentItems;
+        const orders = this.state.orders;
 
-        console.log("Loading status in render: ", loading);
+        console.log("Loading status in orders render: ", loading);
         if (loading) {
             return (
                 [<div key="spinner-container" className="spinner-container" />,
@@ -33,20 +34,11 @@ class Orders extends Component {
             );
         }
 
-        if (items !== undefined) {
+        if (orders.length > 0) {
             return (
-                <div key="content-container"
-                     className='content-container'
-                     onScroll={() => {
-                         /*                         this.manageButtons();
-                                                  this.checkHeight();*/
-                     }}
-                >
-                    {
-                        <AddButton key="add-button" onClick={() => this.props.history.push('/orders/create')}/>
-                        /*                    <ToTopButton key="to-top" onClick={this.onTopButtonClick}/>
-                    <ToBottomButton key="to-bottom" onClick={this.onBottomButtonClick}/>*/}
-                    <OrderTable key="order-table" items={items} classComponent={this}/>
+                <div key="content-container" className='content-container'>
+                    <AddButton key="add-button" onClick={() => this.props.history.push('/orders/create')}/>
+                    <OrderTable key="order-table" items={orders} classComponent={this}/>
                 </div>
             );
         } else {
@@ -55,6 +47,7 @@ class Orders extends Component {
     }
 
     async componentDidMount() {
+        console.log("Orders DID MOUNT")
         let user = localStorage.getItem("user");
         if (user) {
             let userId = JSON.parse(user).id;
@@ -65,12 +58,18 @@ class Orders extends Component {
         }
     }
 
-    componentWillUnmount() {
-        this.props.clearCurrentItemsAction();
+    async componentWillUnmount() {
+        console.log("Orders WILL UNMOUNT");
+        await this.props.clearCurrentItemsAction();
     }
 
     loadOrders() {
-        let certificatesUri = buildOrdersUri(this);
+        let page = 1;
+        this.loadOnePage(page);
+    }
+
+    loadOnePage(currentPage) {
+        let certificatesUri = buildOrdersUri(this, currentPage);
         let authorization_header;
         let token = getTokenFromLocalStorage();
         if (token !== null) {
@@ -86,9 +85,8 @@ class Orders extends Component {
             }
         }).then(response => {
             if (response.ok) {
-                this.loadOrdersIntoProps(response.json()).then(() => {
-                    scrollToPosition(this);
-                })
+                let result = response.json();
+                this.loadOrdersIntoProps(result, currentPage);
             } else {
                 this.props.itemsAreLoaded();
                 console.log("ERROR");
@@ -96,15 +94,18 @@ class Orders extends Component {
         });
     }
 
-    loadOrdersIntoProps(result) {
+    loadOrdersIntoProps(result, page) {
         return result.then(result => {
             console.log('Orders are loaded');
+            console.log(result._embedded)
             if (result._embedded !== undefined) {
                 console.log("Result: ", result._embedded.orders);
+                this.setState({orders: this.state.orders.concat(result._embedded.orders)});
+                this.loadOnePage(page + 1);
+            } else {
                 this.props.itemsAreLoaded();
-                this.props.currentItemsAction(result._embedded.orders);
             }
-        })
+        });
     }
 }
 
@@ -121,7 +122,7 @@ function OrderTable(props) {
                 </TableHead>
                 <TableBody>
                     {props.items.map((row) => (
-                        <TableRow hover key={row.id} onClick={() => props.classComponent.props.history.push(`/orders/${row.id}`)}>
+                        <TableRow className="order-table-row" hover key={row.id} onClick={() => props.classComponent.props.history.push(`/orders/${row.id}`)}>
                             <TableCell>{new Date(row.purchaseDate).toLocaleDateString()}</TableCell>
                             <TableCell>{row.id}</TableCell>
                             <TableCell>${row.cost}</TableCell>
@@ -133,35 +134,21 @@ function OrderTable(props) {
     );
 }
 
-function buildOrdersUri(component) {
+function buildOrdersUri(component, page) {
     let userId = component.state.userId;
-    let ordersUri = `http://localhost:8080/esm/orders/${userId}/order`;
+    let ordersUri = `http://localhost:8080/esm/orders/${userId}/order?page=${page}`;
     console.log("URI: ", ordersUri);
     return ordersUri;
 }
 
-function scrollToPosition(component) {
-    const URLParams = new URLSearchParams(component.props.location.search);
-    const container = document.querySelector('div.content-container');
-    console.log("CLIENT HEIGHT: ", container.clientHeight);
-    console.log("SCROLL TOP: ", container.scrollTop);
-    console.log("SCROLL HEIGHT: ", container.scrollHeight);
-    console.log("SCROLL: ", Number.parseInt(URLParams.get("scroll")));
-    if (Number.parseInt(URLParams.get("scroll")) + container.clientHeight < container.scrollHeight) {
-        container.scroll(0, Number.parseInt(URLParams.get("scroll")));
-    }
-}
-
 function mapStateToProps(state) {
     return {
-        currentItems: state.currentItems,
         itemsLoading: state.itemsLoading
     };
 }
 
 function matchDispatchToProps(dispatch) {
     return bindActionCreators({
-        currentItemsAction: currentItemsAction,
         itemsAreLoading: itemsAreLoading,
         itemsAreLoaded: itemsAreLoaded,
         clearCurrentItemsAction: clearCurrentItemsAction

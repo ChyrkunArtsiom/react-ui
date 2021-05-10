@@ -14,6 +14,7 @@ import OrdersTable from "./ordersTable";
 import AdminManageOrder from "./adminManageOrder";
 import InfoForm from "../adminInfoForm";
 import AdminDeleteForm from "../adminDeleteForm";
+import {hideAddButtonAction, showAddButtonAction} from "../../../actions/showAddButtonAction";
 
 class AdminOrders extends Component {
     constructor(props) {
@@ -176,6 +177,7 @@ class AdminOrders extends Component {
 
     componentDidMount() {
         console.log("DID MOUNT");
+        this.props.showAddButtonAction();
         if (this.state.userId) {
             document.title = `Orders for user №${this.state.userId}`;
         } else {
@@ -194,6 +196,10 @@ class AdminOrders extends Component {
         if (prevState.showError) {
             this.setState({showError: false});
         }
+    }
+
+    componentWillUnmount() {
+        this.props.hideAddButtonAction();
     }
 
     loadItems() {
@@ -352,7 +358,9 @@ function matchDispatchToProps(dispatch) {
         itemsAreLoaded: itemsAreLoaded,
         showManageForm: showManageForm,
         hideManageForm: hideManageForm,
-        putItemToEditForm: putItemToEditForm
+        putItemToEditForm: putItemToEditForm,
+        showAddButtonAction: showAddButtonAction,
+        hideAddButtonAction: hideAddButtonAction
     }, dispatch);
 }
 

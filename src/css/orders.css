@@ -32,6 +32,10 @@ body {
     font-weight: bold;
 }
 
+.order-table-row {
+    cursor: pointer;
+}
+
 .orders-table-container {
     background-color: white;
     margin: 30px;

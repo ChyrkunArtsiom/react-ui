@@ -1,6 +1,8 @@
 import React, {Component} from "react";
 import {Link} from "react-router-dom";
 import favorite_image from "../../images/favorite-24px.svg";
+import {bindActionCreators} from "redux";
+import {connect} from "react-redux";
 
 class CertificateItem extends Component {
     constructor(props) {
@@ -11,6 +13,26 @@ class CertificateItem extends Component {
     }
 
     render() {
+        let addButton = null;
+        let deleteButton = null;
+
+        if (this.props.isLogged) {
+            addButton = (
+                this.state.showAddButton &&
+                <button className="add-button"
+                        onClick={() => this.saveCertificateToOrder(this.props.item.id)}>
+                    Add to order
+                </button>
+            );
+            deleteButton = (
+                !this.state.showAddButton &&
+                <button className="add-button"
+                        onClick={() => this.deleteCertificateFromOrder(this.props.item.id)}>
+                    Delete from order
+                </button>
+            );
+        }
+
         return (
             <div className="coupon-item">
                 <div className="coupon-img" />
@@ -21,7 +43,7 @@ class CertificateItem extends Component {
                         >
                             <h1>{this.props.item.name}</h1>
                         </Link>
-                        <div className="favorites">
+                        <div className="favorites-item">
                             <a href="#"><img key={`CouponItemFavImg${this.props.item.name}`} src={favorite_image} alt='favorite'/></a>
                         </div>
                     </div>
@@ -30,18 +52,10 @@ class CertificateItem extends Component {
                     <div className="coupon-item-bottom">
                         <h1>${this.props.item.price}</h1>
                         {
-                            this.state.showAddButton &&
-                            <button className="add-button"
-                                    onClick={() => this.saveCertificateToOrder(this.props.item.id)}>
-                                Add to order
-                            </button>
+                            addButton
                         }
                         {
-                            !this.state.showAddButton &&
-                            <button className="add-button"
-                                    onClick={() => this.deleteCertificateFromOrder(this.props.item.id)}>
-                                Delete from order
-                            </button>
+                            deleteButton
                         }
                     </div>
                 </div>
@@ -84,4 +98,15 @@ class CertificateItem extends Component {
     }
 }
 
-export default CertificateItem;
+function mapStateToProps(state) {
+    return {
+        isLogged: state.isLogged
+    };
+}
+
+function matchDispatchToProps(dispatch) {
+    return bindActionCreators({
+    }, dispatch);
+}
+
+export default connect(mapStateToProps, matchDispatchToProps)(CertificateItem);

@@ -53,8 +53,26 @@ body {
 }
 
 .coupon-name {
+    min-height: 90px;
     display: flex;
     justify-content: space-between;
+    overflow-wrap: anywhere;
+}
+
+.favorites-item {
+    display: flex;
+    flex-direction: column;
+    opacity: 0.6;
+    font-weight: 600;
+}
+
+.favorites-item > a {
+    width: 20px;
+
+}
+
+.favorites-item:hover {
+    opacity: 1;
 }
 
 .coupon-short-description {

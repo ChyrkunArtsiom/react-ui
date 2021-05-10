@@ -14,19 +14,20 @@ body {
     color: #000000;
     background-color: #ffffff;
     display: flex;
-    justify-content: space-between;
     font-size: 20px;
 }
 
 .login-container {
     display: flex;
     align-items: center;
+    margin-left: auto;
 }
 
 .logo-container {
     height: 100%;
     display: flex;
     align-items: center;
+    margin-right: 20px;
 }
 
 .logo-img {
@@ -46,6 +47,45 @@ body {
 
 .logo-img:hover {
     opacity: 1;
+}
+
+.header-dropdown-menu-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.header-dropdown {
+    display: flex;
+}
+
+.header-dropdown > .btn-primary {
+    background-color: #c0c5c6;
+    border: none;
+    font-weight: bold;
+    width: 110px;
+    height: 40px;
+}
+
+.header-dropdown > .btn-primary:hover {
+    color: black;
+}
+
+.header-dropdown > .btn-primary:focus {
+    background-color: #c0c5c6;
+    border: none;
+}
+
+.header-dropdown > .btn-primary.dropdown-toggle {
+    background-color: #c0c5c6;
+    border: none;
+    box-shadow: none !important;
+}
+
+.header-dropdown > .btn-primary:active {
+    background-color: #c0c5c6 !important;
+    border: none !important;
 }
 
 .logo-text {
@@ -141,7 +181,6 @@ body {
     justify-content: center;
     align-items: center;
     margin-right: auto;
-    margin-left: 20px;
 }
 
 .to-admin-page-button {
